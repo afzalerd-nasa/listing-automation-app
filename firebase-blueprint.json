@@ -1,0 +1,244 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user account and RBAC role assignment.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "format": "email", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 120 },
+        "role": { "type": "string", "enum": ["Administrator", "Seller", "Reviewer"], "maxLength": 32 },
+        "sellerAccountId": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "displayName", "role", "sellerAccountId", "createdAt", "updatedAt"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Amazon India catalog product with extracted attributes, confidence metadata, and SP-API verification state.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "sku": { "type": "string", "maxLength": 64 },
+        "asin": { "type": "string", "maxLength": 32 },
+        "gtin": { "type": "string", "maxLength": 32 },
+        "title": { "type": "string", "maxLength": 250 },
+        "brand": { "type": "string", "maxLength": 100 },
+        "manufacturer": { "type": "string", "maxLength": 120 },
+        "category": { "type": "string", "maxLength": 80 },
+        "productType": { "type": "string", "maxLength": 80 },
+        "bullets": { "type": "array", "maxLength": 5 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "searchKeywords": { "type": "string", "maxLength": 500 },
+        "modelNumber": { "type": "string", "maxLength": 80 },
+        "partNumber": { "type": "string", "maxLength": 80 },
+        "color": { "type": "string", "maxLength": 64 },
+        "size": { "type": "string", "maxLength": 64 },
+        "material": { "type": "string", "maxLength": 100 },
+        "dimensions": { "type": "string", "maxLength": 100 },
+        "weight": { "type": "string", "maxLength": 64 },
+        "packageQuantity": { "type": "integer" },
+        "includedAccessories": { "type": "string", "maxLength": 300 },
+        "technicalSpecs": { "type": "string", "maxLength": 1000 },
+        "compatibility": { "type": "string", "maxLength": 500 },
+        "countryOfOrigin": { "type": "string", "maxLength": 64 },
+        "hsnCode": { "type": "string", "maxLength": 20 },
+        "mrpInr": { "type": "number" },
+        "sellingPriceInr": { "type": "number" },
+        "inventoryCount": { "type": "integer" },
+        "fulfilmentChannel": { "type": "string", "enum": ["FBA", "Easy Ship", "Self-Ship"], "maxLength": 32 },
+        "status": {
+          "type": "string",
+          "enum": ["Draft", "Needs Review", "Ready for Approval", "Approved", "Published (SP-API Verified)", "Submission Failed"],
+          "maxLength": 40
+        },
+        "spApiSubmissionId": { "type": "string", "maxLength": 128 },
+        "spApiVerifiedAt": { "type": "string", "maxLength": 64 },
+        "sourceSummary": { "type": "string", "maxLength": 300 },
+        "confidenceScore": { "type": "integer" },
+        "missingFieldsCount": { "type": "integer" },
+        "conflictSummary": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "sku", "title", "brand", "category", "productType", "status", "createdAt", "updatedAt"]
+    },
+    "ListingError": {
+      "title": "ListingError",
+      "description": "Amazon SP-API listing error or suppression issue requiring seller approval before resolution.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "productId": { "type": "string", "maxLength": 128 },
+        "sku": { "type": "string", "maxLength": 64 },
+        "asin": { "type": "string", "maxLength": 32 },
+        "errorCode": { "type": "string", "maxLength": 64 },
+        "severity": { "type": "string", "enum": ["ERROR", "WARNING", "SUPPRESSED"], "maxLength": 24 },
+        "issueType": { "type": "string", "maxLength": 100 },
+        "amazonMessage": { "type": "string", "maxLength": 1000 },
+        "plainExplanation": { "type": "string", "maxLength": 1000 },
+        "fieldAffected": { "type": "string", "maxLength": 80 },
+        "oldValue": { "type": "string", "maxLength": 500 },
+        "proposedValue": { "type": "string", "maxLength": 500 },
+        "status": { "type": "string", "enum": ["Open", "Fix Proposed", "Approved", "Resolved (SP-API Verified)"], "maxLength": 40 },
+        "spApiVerificationId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "sku", "errorCode", "severity", "issueType", "amazonMessage", "plainExplanation", "fieldAffected", "oldValue", "proposedValue", "status", "createdAt", "updatedAt"]
+    },
+    "Claim": {
+      "title": "Claim",
+      "description": "Amazon India seller reimbursement or catalog support claim with separated financial states.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "claimRef": { "type": "string", "maxLength": 64 },
+        "claimType": { "type": "string", "maxLength": 100 },
+        "fulfilmentMethod": { "type": "string", "enum": ["FBA", "Easy Ship", "Self-Ship"], "maxLength": 32 },
+        "orderId": { "type": "string", "maxLength": 64 },
+        "asin": { "type": "string", "maxLength": 32 },
+        "sku": { "type": "string", "maxLength": 64 },
+        "fnsku": { "type": "string", "maxLength": 64 },
+        "shipmentId": { "type": "string", "maxLength": 64 },
+        "transactionId": { "type": "string", "maxLength": 64 },
+        "eventDate": { "type": "string", "maxLength": 32 },
+        "deadlineDate": { "type": "string", "maxLength": 32 },
+        "policyRuleId": { "type": "string", "maxLength": 64 },
+        "policyName": { "type": "string", "maxLength": 160 },
+        "eligibilityStatus": {
+          "type": "string",
+          "enum": ["Potentially eligible", "Needs Review", "Not Eligible under current rules", "Policy Verification Required"],
+          "maxLength": 64
+        },
+        "potentialAmountInr": { "type": "number" },
+        "requestedAmountInr": { "type": "number" },
+        "approvedAmountInr": { "type": "number" },
+        "receivedAmountInr": { "type": "number" },
+        "workflowStatus": {
+          "type": "string",
+          "enum": ["Candidate", "Under Review", "Ready to Submit", "Submitted to Seller Central", "Reimbursement Confirmed", "Rejected"],
+          "maxLength": 48
+        },
+        "factualExplanation": { "type": "string", "maxLength": 2000 },
+        "requestedResolution": { "type": "string", "maxLength": 500 },
+        "sellerAccuracyConfirmed": { "type": "boolean" },
+        "amazonCaseId": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "claimRef", "claimType", "fulfilmentMethod", "sku", "eligibilityStatus", "potentialAmountInr", "requestedAmountInr", "approvedAmountInr", "receivedAmountInr", "workflowStatus", "factualExplanation", "requestedResolution", "sellerAccuracyConfirmed", "createdAt", "updatedAt"]
+    },
+    "ClaimEvidence": {
+      "title": "ClaimEvidence",
+      "description": "Supporting invoice, shipment POD, inventory ledger, or screenshot linked to a claim.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "claimId": { "type": "string", "maxLength": 128 },
+        "claimRef": { "type": "string", "maxLength": 64 },
+        "documentType": { "type": "string", "maxLength": 80 },
+        "fileName": { "type": "string", "maxLength": 160 },
+        "referenceNumber": { "type": "string", "maxLength": 80 },
+        "issueDate": { "type": "string", "maxLength": 32 },
+        "extractedSummary": { "type": "string", "maxLength": 500 },
+        "verifiedStatus": { "type": "string", "enum": ["Verified", "Needs Review", "Missing Required Signature"], "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "claimId", "claimRef", "documentType", "fileName", "referenceNumber", "issueDate", "extractedSummary", "verifiedStatus", "createdAt"]
+    },
+    "BulkImportJob": {
+      "title": "BulkImportJob",
+      "description": "Excel/CSV bulk import and SP-API feed submission job.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "fileName": { "type": "string", "maxLength": 160 },
+        "totalRows": { "type": "integer" },
+        "validRows": { "type": "integer" },
+        "errorRows": { "type": "integer" },
+        "duplicateSkus": { "type": "integer" },
+        "status": {
+          "type": "string",
+          "enum": ["Validated", "Pending Approval", "Processing SP-API Feed", "Completed", "Partial Failure"],
+          "maxLength": 40
+        },
+        "spApiFeedId": { "type": "string", "maxLength": 128 },
+        "rowSummary": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "fileName", "totalRows", "validRows", "errorRows", "duplicateSkus", "status", "rowSummary", "createdAt", "updatedAt"]
+    },
+    "SpApiConnection": {
+      "title": "SpApiConnection",
+      "description": "Amazon Selling Partner API connection status and marketplace configuration.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "marketplaceId": { "type": "string", "maxLength": 32 },
+        "marketplaceName": { "type": "string", "maxLength": 64 },
+        "sellerId": { "type": "string", "maxLength": 64 },
+        "mode": { "type": "string", "enum": ["SANDBOX", "LIVE_PRODUCTION"], "maxLength": 32 },
+        "connectionStatus": { "type": "string", "enum": ["Connected (Sandbox)", "Connected (Live SP-API)", "Token Expired", "Disconnected"], "maxLength": 40 },
+        "lastSyncAt": { "type": "string", "maxLength": 64 },
+        "activeRoles": { "type": "string", "maxLength": 300 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "marketplaceId", "marketplaceName", "sellerId", "mode", "connectionStatus", "lastSyncAt", "activeRoles", "updatedAt"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable tenant audit log recording user actions, role approvals, and SP-API responses.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "actorEmail": { "type": "string", "maxLength": 256 },
+        "actorRole": { "type": "string", "maxLength": 32 },
+        "action": { "type": "string", "maxLength": 120 },
+        "module": { "type": "string", "maxLength": 64 },
+        "targetId": { "type": "string", "maxLength": 128 },
+        "details": { "type": "string", "maxLength": 1000 },
+        "verificationState": { "type": "string", "enum": ["AI Recommendation Only", "User Approved", "SP-API Verified", "Sandbox Simulated", "Failed"], "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "actorEmail", "actorRole", "action", "module", "targetId", "details", "verificationState", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Authenticated user profile and RBAC role assignment."
+    },
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Seller catalog products and listing drafts."
+    },
+    "/listingErrors/{errorId}": {
+      "schema": { "$ref": "#/entities/ListingError" },
+      "description": "Amazon SP-API listing errors and suppression diagnostics."
+    },
+    "/claims/{claimId}": {
+      "schema": { "$ref": "#/entities/Claim" },
+      "description": "Amazon India seller reimbursement claims and support cases."
+    },
+    "/claimEvidence/{evidenceId}": {
+      "schema": { "$ref": "#/entities/ClaimEvidence" },
+      "description": "Evidence documents attached to reimbursement claims."
+    },
+    "/bulkJobs/{jobId}": {
+      "schema": { "$ref": "#/entities/BulkImportJob" },
+      "description": "Excel and CSV bulk import and feed jobs."
+    },
+    "/spApiConnections/{userId}": {
+      "schema": { "$ref": "#/entities/SpApiConnection" },
+      "description": "Amazon SP-API connection settings per tenant."
+    },
+    "/auditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Immutable audit trail of catalog and claim operations."
+    }
+  }
+}

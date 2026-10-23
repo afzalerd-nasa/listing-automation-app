@@ -1,0 +1,447 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        request.auth.token.email == 'afzalerd@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isOwner(userId) {
+      return isVerifiedUser() && request.auth.uid == userId;
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'role', 'sellerAccountId', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'displayName', 'role', 'sellerAccountId', 'createdAt', 'updatedAt']) &&
+        data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 &&
+        data.uid == request.auth.uid &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 256 &&
+        data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 120 &&
+        data.role is string && data.role.size() <= 32 && data.role in ['Administrator', 'Seller', 'Reviewer'] &&
+        data.sellerAccountId is string && data.sellerAccountId.size() >= 1 && data.sellerAccountId.size() <= 64 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidProduct(data) {
+      return data.keys().hasAll([
+          'ownerId', 'sku', 'asin', 'gtin', 'title', 'brand', 'manufacturer',
+          'category', 'productType', 'bullets', 'description', 'searchKeywords',
+          'modelNumber', 'partNumber', 'color', 'size', 'material', 'dimensions',
+          'weight', 'packageQuantity', 'includedAccessories', 'technicalSpecs',
+          'compatibility', 'countryOfOrigin', 'hsnCode', 'mrpInr', 'sellingPriceInr',
+          'inventoryCount', 'fulfilmentChannel', 'status', 'spApiSubmissionId',
+          'spApiVerifiedAt', 'sourceSummary', 'confidenceScore', 'missingFieldsCount',
+          'conflictSummary', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'sku', 'asin', 'gtin', 'title', 'brand', 'manufacturer',
+          'category', 'productType', 'bullets', 'description', 'searchKeywords',
+          'modelNumber', 'partNumber', 'color', 'size', 'material', 'dimensions',
+          'weight', 'packageQuantity', 'includedAccessories', 'technicalSpecs',
+          'compatibility', 'countryOfOrigin', 'hsnCode', 'mrpInr', 'sellingPriceInr',
+          'inventoryCount', 'fulfilmentChannel', 'status', 'spApiSubmissionId',
+          'spApiVerifiedAt', 'sourceSummary', 'confidenceScore', 'missingFieldsCount',
+          'conflictSummary', 'createdAt', 'updatedAt'
+        ]) &&
+        data.ownerId is string && data.ownerId.size() <= 128 && data.ownerId == request.auth.uid &&
+        data.sku is string && data.sku.size() >= 1 && data.sku.size() <= 64 &&
+        data.asin is string && data.asin.size() <= 32 &&
+        data.gtin is string && data.gtin.size() <= 32 &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 250 &&
+        data.brand is string && data.brand.size() <= 100 &&
+        data.manufacturer is string && data.manufacturer.size() <= 120 &&
+        data.category is string && data.category.size() <= 80 &&
+        data.productType is string && data.productType.size() <= 80 &&
+        data.bullets is list && data.bullets.size() <= 5 &&
+        (data.bullets.size() == 0 || (data.bullets[0] is string && data.bullets[0].size() <= 500)) &&
+        data.description is string && data.description.size() <= 2000 &&
+        data.searchKeywords is string && data.searchKeywords.size() <= 500 &&
+        data.modelNumber is string && data.modelNumber.size() <= 80 &&
+        data.partNumber is string && data.partNumber.size() <= 80 &&
+        data.color is string && data.color.size() <= 64 &&
+        data.size is string && data.size.size() <= 64 &&
+        data.material is string && data.material.size() <= 100 &&
+        data.dimensions is string && data.dimensions.size() <= 100 &&
+        data.weight is string && data.weight.size() <= 64 &&
+        data.packageQuantity is int && data.packageQuantity >= 1 && data.packageQuantity <= 10000 &&
+        data.includedAccessories is string && data.includedAccessories.size() <= 300 &&
+        data.technicalSpecs is string && data.technicalSpecs.size() <= 1000 &&
+        data.compatibility is string && data.compatibility.size() <= 500 &&
+        data.countryOfOrigin is string && data.countryOfOrigin.size() <= 64 &&
+        data.hsnCode is string && data.hsnCode.size() <= 20 &&
+        data.mrpInr is number && data.mrpInr >= 0 &&
+        data.sellingPriceInr is number && data.sellingPriceInr >= 0 &&
+        data.inventoryCount is int && data.inventoryCount >= 0 &&
+        data.fulfilmentChannel is string && data.fulfilmentChannel.size() <= 32 &&
+        data.fulfilmentChannel in ['FBA', 'Easy Ship', 'Self-Ship'] &&
+        data.status is string && data.status.size() <= 40 &&
+        data.status in ['Draft', 'Needs Review', 'Ready for Approval', 'Approved', 'Published (SP-API Verified)', 'Submission Failed'] &&
+        data.spApiSubmissionId is string && data.spApiSubmissionId.size() <= 128 &&
+        data.spApiVerifiedAt is string && data.spApiVerifiedAt.size() <= 64 &&
+        data.sourceSummary is string && data.sourceSummary.size() <= 300 &&
+        data.confidenceScore is int && data.confidenceScore >= 0 && data.confidenceScore <= 100 &&
+        data.missingFieldsCount is int && data.missingFieldsCount >= 0 && data.missingFieldsCount <= 30 &&
+        data.conflictSummary is string && data.conflictSummary.size() <= 500 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidListingError(data) {
+      return data.keys().hasAll([
+          'ownerId', 'productId', 'sku', 'asin', 'errorCode', 'severity',
+          'issueType', 'amazonMessage', 'plainExplanation', 'fieldAffected',
+          'oldValue', 'proposedValue', 'status', 'spApiVerificationId',
+          'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'productId', 'sku', 'asin', 'errorCode', 'severity',
+          'issueType', 'amazonMessage', 'plainExplanation', 'fieldAffected',
+          'oldValue', 'proposedValue', 'status', 'spApiVerificationId',
+          'createdAt', 'updatedAt'
+        ]) &&
+        data.ownerId is string && data.ownerId.size() <= 128 && data.ownerId == request.auth.uid &&
+        data.productId is string && data.productId.size() <= 128 &&
+        data.sku is string && data.sku.size() >= 1 && data.sku.size() <= 64 &&
+        data.asin is string && data.asin.size() <= 32 &&
+        data.errorCode is string && data.errorCode.size() <= 64 &&
+        data.severity is string && data.severity.size() <= 24 && data.severity in ['ERROR', 'WARNING', 'SUPPRESSED'] &&
+        data.issueType is string && data.issueType.size() <= 100 &&
+        data.amazonMessage is string && data.amazonMessage.size() <= 1000 &&
+        data.plainExplanation is string && data.plainExplanation.size() <= 1000 &&
+        data.fieldAffected is string && data.fieldAffected.size() <= 80 &&
+        data.oldValue is string && data.oldValue.size() <= 500 &&
+        data.proposedValue is string && data.proposedValue.size() <= 500 &&
+        data.status is string && data.status.size() <= 40 &&
+        data.status in ['Open', 'Fix Proposed', 'Approved', 'Resolved (SP-API Verified)'] &&
+        data.spApiVerificationId is string && data.spApiVerificationId.size() <= 128 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidClaim(data) {
+      return data.keys().hasAll([
+          'ownerId', 'claimRef', 'claimType', 'fulfilmentMethod', 'orderId',
+          'asin', 'sku', 'fnsku', 'shipmentId', 'transactionId', 'eventDate',
+          'deadlineDate', 'policyRuleId', 'policyName', 'eligibilityStatus',
+          'potentialAmountInr', 'requestedAmountInr', 'approvedAmountInr',
+          'receivedAmountInr', 'workflowStatus', 'factualExplanation',
+          'requestedResolution', 'sellerAccuracyConfirmed', 'amazonCaseId',
+          'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'claimRef', 'claimType', 'fulfilmentMethod', 'orderId',
+          'asin', 'sku', 'fnsku', 'shipmentId', 'transactionId', 'eventDate',
+          'deadlineDate', 'policyRuleId', 'policyName', 'eligibilityStatus',
+          'potentialAmountInr', 'requestedAmountInr', 'approvedAmountInr',
+          'receivedAmountInr', 'workflowStatus', 'factualExplanation',
+          'requestedResolution', 'sellerAccuracyConfirmed', 'amazonCaseId',
+          'createdAt', 'updatedAt'
+        ]) &&
+        data.ownerId is string && data.ownerId.size() <= 128 && data.ownerId == request.auth.uid &&
+        data.claimRef is string && data.claimRef.size() >= 1 && data.claimRef.size() <= 64 &&
+        data.claimType is string && data.claimType.size() <= 100 &&
+        data.fulfilmentMethod is string && data.fulfilmentMethod.size() <= 32 &&
+        data.fulfilmentMethod in ['FBA', 'Easy Ship', 'Self-Ship'] &&
+        data.orderId is string && data.orderId.size() <= 64 &&
+        data.asin is string && data.asin.size() <= 32 &&
+        data.sku is string && data.sku.size() >= 1 && data.sku.size() <= 64 &&
+        data.fnsku is string && data.fnsku.size() <= 64 &&
+        data.shipmentId is string && data.shipmentId.size() <= 64 &&
+        data.transactionId is string && data.transactionId.size() <= 64 &&
+        data.eventDate is string && data.eventDate.size() <= 32 &&
+        data.deadlineDate is string && data.deadlineDate.size() <= 32 &&
+        data.policyRuleId is string && data.policyRuleId.size() <= 64 &&
+        data.policyName is string && data.policyName.size() <= 160 &&
+        data.eligibilityStatus is string && data.eligibilityStatus.size() <= 64 &&
+        data.eligibilityStatus in ['Potentially eligible', 'Needs Review', 'Not Eligible under current rules', 'Policy Verification Required'] &&
+        data.potentialAmountInr is number && data.potentialAmountInr >= 0 &&
+        data.requestedAmountInr is number && data.requestedAmountInr >= 0 &&
+        data.approvedAmountInr is number && data.approvedAmountInr >= 0 &&
+        data.receivedAmountInr is number && data.receivedAmountInr >= 0 &&
+        data.workflowStatus is string && data.workflowStatus.size() <= 48 &&
+        data.workflowStatus in ['Candidate', 'Under Review', 'Ready to Submit', 'Submitted to Seller Central', 'Reimbursement Confirmed', 'Rejected'] &&
+        data.factualExplanation is string && data.factualExplanation.size() <= 2000 &&
+        data.requestedResolution is string && data.requestedResolution.size() <= 500 &&
+        data.sellerAccuracyConfirmed is bool &&
+        data.amazonCaseId is string && data.amazonCaseId.size() <= 64 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidClaimEvidence(data) {
+      return data.keys().hasAll([
+          'ownerId', 'claimId', 'claimRef', 'documentType', 'fileName',
+          'referenceNumber', 'issueDate', 'extractedSummary', 'verifiedStatus', 'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'claimId', 'claimRef', 'documentType', 'fileName',
+          'referenceNumber', 'issueDate', 'extractedSummary', 'verifiedStatus', 'createdAt'
+        ]) &&
+        data.ownerId is string && data.ownerId.size() <= 128 && data.ownerId == request.auth.uid &&
+        data.claimId is string && data.claimId.size() <= 128 &&
+        data.claimRef is string && data.claimRef.size() <= 64 &&
+        data.documentType is string && data.documentType.size() <= 80 &&
+        data.fileName is string && data.fileName.size() >= 1 && data.fileName.size() <= 160 &&
+        data.referenceNumber is string && data.referenceNumber.size() <= 80 &&
+        data.issueDate is string && data.issueDate.size() <= 32 &&
+        data.extractedSummary is string && data.extractedSummary.size() <= 500 &&
+        data.verifiedStatus is string && data.verifiedStatus.size() <= 40 &&
+        data.verifiedStatus in ['Verified', 'Needs Review', 'Missing Required Signature'] &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidBulkJob(data) {
+      return data.keys().hasAll([
+          'ownerId', 'fileName', 'totalRows', 'validRows', 'errorRows',
+          'duplicateSkus', 'status', 'spApiFeedId', 'rowSummary', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'fileName', 'totalRows', 'validRows', 'errorRows',
+          'duplicateSkus', 'status', 'spApiFeedId', 'rowSummary', 'createdAt', 'updatedAt'
+        ]) &&
+        data.ownerId is string && data.ownerId.size() <= 128 && data.ownerId == request.auth.uid &&
+        data.fileName is string && data.fileName.size() >= 1 && data.fileName.size() <= 160 &&
+        data.totalRows is int && data.totalRows >= 0 &&
+        data.validRows is int && data.validRows >= 0 &&
+        data.errorRows is int && data.errorRows >= 0 &&
+        data.duplicateSkus is int && data.duplicateSkus >= 0 &&
+        data.status is string && data.status.size() <= 40 &&
+        data.status in ['Validated', 'Pending Approval', 'Processing SP-API Feed', 'Completed', 'Partial Failure'] &&
+        data.spApiFeedId is string && data.spApiFeedId.size() <= 128 &&
+        data.rowSummary is string && data.rowSummary.size() <= 2000 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidSpApiConnection(data) {
+      return data.keys().hasAll([
+          'ownerId', 'marketplaceId', 'marketplaceName', 'sellerId',
+          'mode', 'connectionStatus', 'lastSyncAt', 'activeRoles', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'marketplaceId', 'marketplaceName', 'sellerId',
+          'mode', 'connectionStatus', 'lastSyncAt', 'activeRoles', 'updatedAt'
+        ]) &&
+        data.ownerId is string && data.ownerId.size() <= 128 && data.ownerId == request.auth.uid &&
+        data.marketplaceId is string && data.marketplaceId.size() <= 32 &&
+        data.marketplaceName is string && data.marketplaceName.size() <= 64 &&
+        data.sellerId is string && data.sellerId.size() <= 64 &&
+        data.mode is string && data.mode.size() <= 32 && data.mode in ['SANDBOX', 'LIVE_PRODUCTION'] &&
+        data.connectionStatus is string && data.connectionStatus.size() <= 40 &&
+        data.connectionStatus in ['Connected (Sandbox)', 'Connected (Live SP-API)', 'Token Expired', 'Disconnected'] &&
+        data.lastSyncAt is string && data.lastSyncAt.size() <= 64 &&
+        data.activeRoles is string && data.activeRoles.size() <= 300 &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAuditLog(data) {
+      return data.keys().hasAll([
+          'ownerId', 'actorEmail', 'actorRole', 'action', 'module',
+          'targetId', 'details', 'verificationState', 'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'actorEmail', 'actorRole', 'action', 'module',
+          'targetId', 'details', 'verificationState', 'createdAt'
+        ]) &&
+        data.ownerId is string && data.ownerId.size() <= 128 && data.ownerId == request.auth.uid &&
+        data.actorEmail is string && data.actorEmail.size() <= 256 &&
+        data.actorRole is string && data.actorRole.size() <= 32 &&
+        data.action is string && data.action.size() <= 120 &&
+        data.module is string && data.module.size() <= 64 &&
+        data.targetId is string && data.targetId.size() <= 128 &&
+        data.details is string && data.details.size() <= 1000 &&
+        data.verificationState is string && data.verificationState.size() <= 40 &&
+        data.verificationState in ['AI Recommendation Only', 'User Approved', 'SP-API Verified', 'Sandbox Simulated', 'Failed'] &&
+        data.createdAt is timestamp;
+    }
+
+    match /admins/{adminId} {
+      allow get: if isValidId(adminId) && (isOwner(adminId) || isAdmin());
+      allow list, create, update, delete: if false;
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow create: if isValidId(userId) && isOwner(userId) &&
+        isValidUserProfile(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (incoming().role in ['Seller', 'Reviewer'] || isAdmin());
+      allow update: if isValidId(userId) && isOwner(userId) &&
+        isValidUserProfile(incoming()) &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          (incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'role', 'sellerAccountId', 'updatedAt']) &&
+           (incoming().role in ['Seller', 'Reviewer'] || incoming().role == existing().role))
+        );
+      allow delete: if false;
+    }
+
+    match /products/{productId} {
+      allow get: if isValidId(productId) && (isOwner(existing().ownerId) || isAdmin());
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isValidId(productId) && isVerifiedUser() &&
+        isValidProduct(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(productId) && isVerifiedUser() &&
+        isValidProduct(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          (isOwner(existing().ownerId) &&
+           incoming().diff(existing()).affectedKeys().hasOnly([
+             'sku', 'asin', 'gtin', 'title', 'brand', 'manufacturer', 'category',
+             'productType', 'bullets', 'description', 'searchKeywords', 'modelNumber',
+             'partNumber', 'color', 'size', 'material', 'dimensions', 'weight',
+             'packageQuantity', 'includedAccessories', 'technicalSpecs', 'compatibility',
+             'countryOfOrigin', 'hsnCode', 'mrpInr', 'sellingPriceInr', 'inventoryCount',
+             'fulfilmentChannel', 'status', 'spApiSubmissionId', 'spApiVerifiedAt',
+             'sourceSummary', 'confidenceScore', 'missingFieldsCount', 'conflictSummary', 'updatedAt'
+           ]))
+        );
+      allow delete: if isValidId(productId) && (isOwner(existing().ownerId) || isAdmin());
+    }
+
+    match /listingErrors/{errorId} {
+      allow get: if isValidId(errorId) && (isOwner(existing().ownerId) || isAdmin());
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isValidId(errorId) && isVerifiedUser() &&
+        isValidListingError(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(errorId) && isVerifiedUser() &&
+        isValidListingError(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          (isOwner(existing().ownerId) &&
+           incoming().diff(existing()).affectedKeys().hasOnly([
+             'proposedValue', 'status', 'spApiVerificationId', 'plainExplanation', 'updatedAt'
+           ]))
+        );
+      allow delete: if isValidId(errorId) && (isOwner(existing().ownerId) || isAdmin());
+    }
+
+    match /claims/{claimId} {
+      allow get: if isValidId(claimId) && (isOwner(existing().ownerId) || isAdmin());
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isValidId(claimId) && isVerifiedUser() &&
+        isValidClaim(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(claimId) && isVerifiedUser() &&
+        isValidClaim(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          (isOwner(existing().ownerId) &&
+           incoming().diff(existing()).affectedKeys().hasOnly([
+             'eligibilityStatus', 'potentialAmountInr', 'requestedAmountInr',
+             'approvedAmountInr', 'receivedAmountInr', 'workflowStatus',
+             'factualExplanation', 'requestedResolution', 'sellerAccuracyConfirmed',
+             'amazonCaseId', 'updatedAt'
+           ]))
+        );
+      allow delete: if isValidId(claimId) && (isOwner(existing().ownerId) || isAdmin());
+    }
+
+    match /claimEvidence/{evidenceId} {
+      allow get: if isValidId(evidenceId) && (isOwner(existing().ownerId) || isAdmin());
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isValidId(evidenceId) && isVerifiedUser() &&
+        isValidClaimEvidence(incoming()) &&
+        incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if isValidId(evidenceId) && (isOwner(existing().ownerId) || isAdmin());
+    }
+
+    match /bulkJobs/{jobId} {
+      allow get: if isValidId(jobId) && (isOwner(existing().ownerId) || isAdmin());
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isValidId(jobId) && isVerifiedUser() &&
+        isValidBulkJob(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(jobId) && isVerifiedUser() &&
+        isValidBulkJob(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          (isOwner(existing().ownerId) &&
+           incoming().diff(existing()).affectedKeys().hasOnly([
+             'status', 'spApiFeedId', 'rowSummary', 'validRows', 'errorRows', 'updatedAt'
+           ]))
+        );
+      allow delete: if isValidId(jobId) && (isOwner(existing().ownerId) || isAdmin());
+    }
+
+    match /spApiConnections/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isValidId(userId) && isOwner(userId) &&
+        isValidSpApiConnection(incoming()) &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(userId) && isOwner(userId) &&
+        isValidSpApiConnection(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'marketplaceId', 'marketplaceName', 'sellerId', 'mode',
+            'connectionStatus', 'lastSyncAt', 'activeRoles', 'updatedAt'
+          ])
+        );
+      allow delete: if false;
+    }
+
+    match /auditLogs/{logId} {
+      allow get: if isValidId(logId) && (isOwner(existing().ownerId) || isAdmin());
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isValidId(logId) && isVerifiedUser() &&
+        isValidAuditLog(incoming()) &&
+        incoming().createdAt == request.time;
+      allow update, delete: if false;
+    }
+  }
+}

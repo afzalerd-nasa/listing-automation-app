@@ -1,0 +1,6 @@
+{
+  "name": "afzal Listing Automation",
+  "description": "Amazon India seller operations platform for automated product data extraction, SP-API listing generation, bulk catalog automation, error resolution, and policy-backed reimbursement claims.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
